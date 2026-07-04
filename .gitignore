@@ -1,0 +1,14 @@
+# deps / build output
+node_modules
+dist
+
+# editor / OS
+.vscode
+.DS_Store
+*.log
+*.local
+
+# secrets — never commit signing keys or generated licenses
+keys/
+
+# src-tauri/target and src-tauri/gen are ignored by src-tauri/.gitignore

@@ -1,0 +1,52 @@
+name: release
+
+# タグ v* を push すると Windows インストーラ (NSIS/MSI) をビルドし、
+# 同名の GitHub Release に添付する。手動更新用の latest.json は別途手作業で置く。
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "jidori-kun ${{ github.ref_name }}"
+          releaseBody: |
+            Windows 向けインストーラを添付しています。
+
+            - `jidori-kun_*_x64-setup.exe` … NSIS インストーラ（推奨）
+            - `jidori-kun_*_x64_en-US.msi` … MSI インストーラ
+
+            > ⚠️ 未署名のため、初回起動時に Windows SmartScreen 警告が出ます。
+            > 「詳細情報」→「実行」で続行してください。
+          releaseDraft: false
+          prerelease: false
